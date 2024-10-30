@@ -8,7 +8,7 @@
 
 .data
 
-image888:  # A rainbow-like image Red->Green->Blue->Red
+image888:  
     .byte 255, 0,     0
     .byte 255,  85,   0
     .byte 255, 170,   0
@@ -46,17 +46,17 @@ image565:
 #     to the size of the image888 (6, 19 in this example)
 # - This will enable the LED matrix
 # - Uncomment the following and you should see the image on the LED matrix!
-#    la   a0, image888
-#    li   a1, LED_MATRIX_0_BASE
-#    li   a2, LED_MATRIX_0_WIDTH
-#    li   a3, LED_MATRIX_0_HEIGHT
-#    jal  ra, showImage
+    la   a0, image888
+    li   a1, LED_MATRIX_0_BASE
+    li   a2, LED_MATRIX_0_WIDTH
+    li   a3, LED_MATRIX_0_HEIGHT
+    jal  ra, showImage
 # ----- This is where the fun part ends!
 
     la   a0, image888
     la   a3, image565
-    li   a1, 19 # width
-    li   a2,  6 # height
+    li   a1, 19 
+    li   a2,  6 
     jal  ra, rgb888_to_rgb565
 
     addi a7, zero, 10 
@@ -71,22 +71,22 @@ image565:
 # Caution: Assumes the image and LED matrix have the
 # same dimensions!
 showImage:
-    add  t0, zero, zero # row counter
+    add  t0, zero, zero 
 showRowLoop:
     bge  t0, a3, outShowRowLoop
-    add  t1, zero, zero # column counter
+    add  t1, zero, zero 
 showColumnLoop:
     bge  t1, a2, outShowColumnLoop
-    lbu  t2, 0(a0) # get red
-    lbu  t3, 1(a0) # get green
-    lbu  t4, 2(a0) # get blue
-    slli t2, t2, 16  # place red at the 3rd byte of "led" word
-    slli t3, t3, 8   #   green at the 2nd
-    or   t4, t4, t3  # combine green, blue
-    or   t4, t4, t2  # Add red to the above
-    sw   t4, 0(a1)   # let there be light at this pixel
-    addi a0, a0, 3   # move on to the next image pixel
-    addi a1, a1, 4   # move on to the next LED
+    lbu  t2, 0(a0) 
+    lbu  t3, 1(a0) 
+    lbu  t4, 2(a0) 
+    slli t2, t2, 16 
+    slli t3, t3, 8  
+    or   t4, t4, t3  
+    or   t4, t4, t2  
+    sw   t4, 0(a1)   
+    addi a0, a0, 3   
+    addi a1, a1, 4   
     addi t1, t1, 1
     j    showColumnLoop
 outShowColumnLoop:
@@ -94,13 +94,63 @@ outShowColumnLoop:
     j    showRowLoop
 outShowRowLoop:
     jalr zero, ra, 0
-
 # ----------------------------------------
 
 rgb888_to_rgb565:
-# ----------------------------------------
-# Write your code here.
-# You may move the "return" instruction (jalr zero, ra, 0).
+    add  t0, zero, zero 
+rowLoop:
+    bge  t0, a2, outRowLoop
+    add  t1, zero, zero
+columnLoop:
+    bge  t1, a1, outColumnLoop
+    lbu  t2, 0(a0)   
+    lbu  t3, 1(a0)   
+    lbu  t4, 2(a0)   
+    andi t2, t2, 0xf8   
+    slli t2, t2, 8      
+    andi t3, t3, 0xfc   
+    slli t3, t3, 3      
+    srli t4, t4, 3      
+    or   t2, t2, t3
+    or   t2, t2, t4
+    sh   t2, 0(a3)  
+    addi a0, a0, 3   
+    addi a3, a3, 2   
+    addi t1, t1, 1
+    j    columnLoop
+outColumnLoop:
+    addi t0, t0, 1
+    j    rowLoop
+outRowLoop:
+    jalr zero, ra, 0
+
+
+                    
+rgb565_to_rgb888:
+    add  t0, zero, zero 
+rowl:
+    bge  t0, a2, outRowl
+    add  t1, zero, zero 
+columnl:
+    bge  t1, a1, outColumnl
+    lhu  t2, 0(a0)
+    srli t3, t2, 8  
+    andi t3, t3, 0xf8 
+    sb   t3, 0(a3) 
+    srli t3, t2, 3  
+    andi t3, t3, 0xfc 
+    sb   t3, 1(a3) 
+    slli t3, t2, 3
+    andi t3, t3, 0xf8 
+    sb   t3, 3(a3) 
+    addi a0, a0, 2   
+    addi a3, a3, 3   
+    addi t1, t1, 1
+    j    columnl
+outColumnl:
+    addi t0, t0, 1
+    j    rowl
+outRowl:
     jalr zero, ra, 0
 
 
